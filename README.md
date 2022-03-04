@@ -31,3 +31,5 @@ The hooks will then be installed when you make your first commit, or you can do:
 ```bash
 pre-commit run
 ```
+
+Try changing "badly_formatted.py" by adding some whitespace at the bottom then committing. It should make changes that you can then stage to commit.
