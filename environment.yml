@@ -15,3 +15,8 @@ dependencies:
   - certifi
   - openssl
   - pytest
+  - xgboost
+  - bayesian-optimization
+  - scikit-optimize
+  - scipy
+  - seaborn
