@@ -18,6 +18,4 @@ def fun_too_close_to_another(list):
     pd.DataFrame()
     np.ones(1)
     return list
-
-
 fun_too_close_to_another(awful_list)
