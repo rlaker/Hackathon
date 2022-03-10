@@ -10,7 +10,7 @@ Install the conda environment by running:
 conda env create -f environment.yml
 ```
 
-This should install [sci-kit learn](https://scikit-learn.org/stable/index.html) and [PyTorch](https://pytorch.org/) (I went for CPU only as we don't have GPU's). This should be fine to start with, if we need to do some proper neural network stuff then we should use [Docker](https://www.docker.com/) container, as suggested by [Tensorflow](https://www.tensorflow.org/install).
+This should install [sci-kit learn](https://scikit-learn.org/stable/index.html). This should be fine to start with, if we need to do some proper neural network stuff then we should use [Docker](https://www.docker.com/) container, as suggested by [Tensorflow](https://www.tensorflow.org/install).
 
 If you need to install a new package, try using conda first. Then use pip, but run it like this so that it installs only to the environment (not your base conda env)
 
