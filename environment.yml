@@ -2,6 +2,7 @@ name: ml
 channels:
   - conda-forge
   - defaults
+  - pytorch
 dependencies:
   - python=3.9
   - matplotlib
@@ -20,3 +21,10 @@ dependencies:
   - scikit-optimize
   - scipy
   - seaborn
+  - pytorch
+  - torchvision
+  - torchaudio
+  - cpuonly
+  - pip
+  - pip:
+    - stable_baselines3
