@@ -1,3 +1,4 @@
 **/*.pyc
 workspace.code-workspace
 /.vscode
+/Data
