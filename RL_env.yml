@@ -1,0 +1,13 @@
+name: rl
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.7
+  - matplotlib
+  - numpy
+  - pandas
+  - pip
+  - pip:
+    - stable-baselines
+    - tensorflow==1.14
