@@ -1,5 +1,4 @@
 # Our crucial corporate message
 
-import matplotlib
 
-print('Phil is cool!')
+print("Phil is cool!")
