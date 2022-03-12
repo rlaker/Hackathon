@@ -2,3 +2,4 @@
 workspace.code-workspace
 /.vscode
 /Data
+.DS_store
