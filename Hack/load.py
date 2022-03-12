@@ -17,7 +17,9 @@ class loader(abc.ABC):
 
     def load(self):
         df = self.load_csv(self.local_path)
-        return self.set_date_index(df)
+        df = self.set_date_index(df)
+        df = add_local_time(df)
+        return df
 
     def load_csv(self, fname, delimiter=",", header=0):
         return pd.read_csv(fname, delimiter=delimiter, header=header)
@@ -46,12 +48,6 @@ class systemprice(loader):
     @property
     def fname(self):
         return "systemprice.csv"
-
-    def load(self):
-        df = self.load_csv(self.local_path)
-        df = self.set_date_index(df)
-        df = add_local_time(df)
-        return df
 
     def parse_dates(self, df):
         utc_dates = []
