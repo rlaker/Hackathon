@@ -21,4 +21,4 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install pre-commit
     - name: Run pre-commit
-      run: pre-commit run
+      run: pre-commit run --all-files
