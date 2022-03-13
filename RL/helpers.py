@@ -47,9 +47,9 @@ class energy_price_env(gym.Env):
         if idx == 0:
             return self.price_array[idx]
         elif idx < self.window_size:
-            return np.mean(self.price_array[:idx])
+            return np.median(self.price_array[:idx])
         else:
-            return np.mean(self.price_array[idx - self.window_size : idx])
+            return np.median(self.price_array[idx - self.window_size : idx])
 
     def step(self, action):
         current_price, mean_price, current_energy, current_time = self.state
