@@ -145,6 +145,7 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     for i in range(num_episodes):
 
         episode_rewards = []
+
         if i == 0:
             current_prices = []
             mean_prices = []
