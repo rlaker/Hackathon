@@ -36,12 +36,7 @@ def get_expected_price(price_array, idx, window_size=2 * 24, mode="mode"):
 
 
 class energy_price_env(gym.Env):
-    def __init__(
-        self,
-        obs_price_array,
-        start_energy=1,
-        window_size=1000,
-    ):
+    def __init__(self, obs_price_array, start_energy=1, window_size=1000, power=1):
         self.price_array = obs_price_array
         self.action_space = gym.spaces.Discrete(3)
         # current_price, mean_price, current_energy, time
@@ -56,7 +51,7 @@ class energy_price_env(gym.Env):
 
         self.time = 0
         self.earnings = 0
-        self.power = 1  # MW
+        self.power = power  # MW
         self.capacity = 1  # MWh
         self.efficiency = 0.85
 
