@@ -2,6 +2,10 @@
 
 Our GitHub Repo for the [AIHack2022](https://2022.aihack.org) hackathon.
 
+## Submission
+
+To see our final model and conclusions read `submission.ipynb`.
+
 ## Installation
 
 Install the conda environment by running:
