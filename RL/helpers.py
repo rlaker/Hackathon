@@ -212,7 +212,7 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
 
         all_episode_rewards.append(sum(episode_rewards))
 
-    fig, axs = plt.subplots(4, 1, sharex=True)
+    fig, axs = plt.subplots(4, 1, sharex=True, figsize=(20, 15))
     if index is None:
         index = np.arange(0, len(current_times))[:-1]
     else:
@@ -221,18 +221,24 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     bank_total = np.cumsum(all_earnings)
     axs[0].plot(index, cum_rewards[:-1], color="red", label="Cumalative rewards")
     axs[0].plot(index, bank_total[:-1], color="blue", label="Bank total")
-    axs[0].legend()
+    axs[0].legend(loc="upper left")
     axs[1].plot(index, current_prices[:-1], color="blue", label="Current prices")
     axs[1].plot(index, mean_prices[:-1], color="red", label="Mean prices")
-    axs[1].legend()
+    axs[1].legend(loc="upper left")
 
     axs[2].plot(index, episode_rewards[:-1], color="black", label="Reward")
-    axs[2].legend()
+    # axs[2].legend()
 
     axs[3].plot(index, current_energies[:-1], color="blue", label="Current energies")
     fig.autofmt_xdate()
     mean_episode_reward = np.mean(all_episode_rewards)
     std_episode_reward = np.std(all_episode_rewards)
+
+    axs[0].set_ylabel("Price")
+    axs[1].set_ylabel("Price")
+    axs[2].set_ylabel("Reward")
+    axs[3].set_ylabel("Current Energy")
+
     print(
         "Mean reward:",
         mean_episode_reward,
