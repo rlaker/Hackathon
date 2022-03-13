@@ -3,3 +3,4 @@ workspace.code-workspace
 /.vscode
 /Data
 .DS_store
+.ipynb_checkpoints/
