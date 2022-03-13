@@ -4,7 +4,14 @@ import numpy as np
 
 
 class energy_price_env(gym.Env):
-    def __init__(self, price_array, start_energy=1, start_time=0, max_time=7 * 24 * 2):
+    def __init__(
+        self,
+        price_array,
+        start_energy=1,
+        start_time=0,
+        max_time=7 * 24 * 2,
+        window_size=1000,
+    ):
         self.price_array = price_array
         self.action_space = gym.spaces.Discrete(3)
         # current_price, mean_price, current_energy, time
@@ -15,15 +22,18 @@ class energy_price_env(gym.Env):
         )
         # our state is the charge
         self.start_energy = start_energy
-        self.state = np.array(
-            [self.get_price(start_time), self.get_mean_price(start_time), start_energy]
-        )
+        self.window_size = window_size
+
         self.start_time = start_time
         self.earnings = 0
         self.power = 1  # MW
         self.capacity = 1  # MWh
         self.efficiency = 0.85
         self.max_time = max_time
+
+        self.state = np.array(
+            [self.get_price(start_time), self.get_mean_price(start_time), start_energy]
+        )
 
     def get_state(self):
         return self.state
@@ -33,13 +43,13 @@ class energy_price_env(gym.Env):
 
     def get_mean_price(self, idx):
         idx = int(idx)
-        window_size = 1000
+
         if idx == 0:
             return self.price_array[idx]
-        elif idx < window_size:
+        elif idx < self.window_size:
             return np.mean(self.price_array[:idx])
         else:
-            return np.mean(self.price_array[idx - window_size : idx])
+            return np.mean(self.price_array[idx - self.window_size : idx])
 
     def step(self, action):
         current_price, mean_price, current_energy, current_time = self.state
@@ -117,7 +127,7 @@ def env2human(action):
     return int(action - 1)
 
 
-def evaluate(model, new_env=None, num_episodes=100):
+def evaluate(model, new_env=None, num_episodes=100, index=None):
     """
     Evaluate a RL agent
     :param model: (BaseRLModel object) the RL Agent
@@ -140,6 +150,7 @@ def evaluate(model, new_env=None, num_episodes=100):
             mean_prices = []
             current_energies = []
             all_earnings = [0]
+            current_times = []
 
         done = False
         obs = env.reset()
@@ -166,24 +177,28 @@ def evaluate(model, new_env=None, num_episodes=100):
                 current_prices.append(current_price)
                 mean_prices.append(mean_price)
                 current_energies.append(current_energy)
+                current_times.append(current_time)
 
         all_episode_rewards.append(sum(episode_rewards))
 
     fig, axs = plt.subplots(4, 1, sharex=True)
-    index = np.arange(0, len(current_energies))
+    if index is None:
+        index = np.arange(0, len(current_times))[:-1]
+    else:
+        index = index[np.asarray(current_times, dtype=int)][:-1]
     cum_rewards = np.cumsum(episode_rewards)
     bank_total = np.cumsum(all_earnings)
-    axs[0].plot(index, cum_rewards, color="red", label="Cumalative rewards")
-    axs[0].plot(index, bank_total, color="blue", label="Bank total")
+    axs[0].plot(index, cum_rewards[:-1], color="red", label="Cumalative rewards")
+    axs[0].plot(index, bank_total[:-1], color="blue", label="Bank total")
     axs[0].legend()
-    axs[1].plot(index, current_prices, color="blue", label="Current prices")
-    axs[1].plot(index, mean_prices, color="red", label="Mean prices")
+    axs[1].plot(index, current_prices[:-1], color="blue", label="Current prices")
+    axs[1].plot(index, mean_prices[:-1], color="red", label="Mean prices")
     axs[1].legend()
 
-    axs[2].plot(index, episode_rewards, color="black", label="Reward")
+    axs[2].plot(index, episode_rewards[:-1], color="black", label="Reward")
     axs[2].legend()
 
-    axs[3].plot(index, current_energies, color="blue", label="Current energies")
+    axs[3].plot(index, current_energies[:-1], color="blue", label="Current energies")
 
     mean_episode_reward = np.mean(all_episode_rewards)
     print("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes)
