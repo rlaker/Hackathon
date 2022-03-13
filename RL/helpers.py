@@ -3,16 +3,46 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
+def get_mode(arr, bin_number=10):
+    arr = arr[~np.isnan(arr)]  # ~ means not
+
+    if len(arr) > 0:
+        hist, bin_edges = np.histogram(arr, bins=bin_number)
+        centers = 0.5 * (bin_edges[1:] + bin_edges[:-1])
+        max_idx = np.argmax(hist)
+        mode = centers[max_idx]
+        return mode
+    else:
+        # print('Just nans')
+        return np.nan
+
+
+def get_expected_price(price_array, idx, window_size=2 * 24, mode="mode"):
+    idx = int(idx)
+
+    if idx == 0:
+        arr = price_array[idx]
+    elif idx < window_size:
+        arr = price_array[:idx]
+    else:
+        arr = price_array[idx - window_size : idx]
+
+    if mode == "mean":
+        return np.mean(arr)
+    if mode == "mode":
+        return get_mode(arr, 5)
+    if mode == "median":
+        return np.median(arr)
+
+
 class energy_price_env(gym.Env):
     def __init__(
         self,
-        price_array,
-        start_energy=0,
-        start_time=0,
-        max_time=7 * 24 * 2,
+        obs_price_array,
+        start_energy=1,
         window_size=1000,
     ):
-        self.price_array = price_array
+        self.price_array = obs_price_array
         self.action_space = gym.spaces.Discrete(3)
         # current_price, mean_price, current_energy, time
         self.observation_space = gym.spaces.Box(
@@ -24,15 +54,18 @@ class energy_price_env(gym.Env):
         self.start_energy = start_energy
         self.window_size = window_size
 
-        self.start_time = start_time
+        self.time = 0
         self.earnings = 0
         self.power = 1  # MW
         self.capacity = 1  # MWh
         self.efficiency = 0.85
-        self.max_time = max_time
 
         self.state = np.array(
-            [self.get_price(start_time), self.get_mean_price(start_time), start_energy]
+            [
+                self.get_price(self.time),
+                self.get_expected_price(self.time),
+                start_energy,
+            ]
         )
 
     def get_state(self):
@@ -41,15 +74,11 @@ class energy_price_env(gym.Env):
     def get_price(self, idx):
         return self.price_array[int(idx)]
 
-    def get_mean_price(self, idx):
-        idx = int(idx)
 
-        if idx == 0:
-            return self.price_array[idx]
-        elif idx < self.window_size:
-            return np.median(self.price_array[:idx])
-        else:
-            return np.median(self.price_array[idx - self.window_size : idx])
+    def get_expected_price(self, idx, window_size=2 * 24, mode="median"):
+        return get_expected_price(
+            self.price_array, idx, window_size=window_size, mode=mode
+        )
 
     def step(self, action):
         current_price, mean_price, current_energy, current_time = self.state
@@ -90,13 +119,14 @@ class energy_price_env(gym.Env):
 
         self.state = (
             self.get_price(current_time),
-            self.get_mean_price(current_time),
+            self.get_expected_price(current_time),
             new_energy,
             current_time,
         )
 
         info = {}
-        if current_time >= self.max_time + self.start_time:
+        # end when we run out of data
+        if current_time >= self.price_array.shape[0] - 1:
             done = True
         else:
             done = False
@@ -106,12 +136,13 @@ class energy_price_env(gym.Env):
     def reset(self):
         # this resets the environment so it can try again
         # print('Environment reset')
+        self.time = 0
         self.state = np.array(
             [
-                self.get_price(self.start_time),
-                self.get_mean_price(self.start_time),
+                self.get_price(self.time),
+                self.get_expected_price(self.time),
                 self.start_energy,
-                self.start_time,
+                self.time,
             ]
         )
         # ! this puts us at the start of the week, we could make this random?
