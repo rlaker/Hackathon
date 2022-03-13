@@ -117,7 +117,7 @@ def env2human(action):
     return int(action - 1)
 
 
-def evaluate(model, new_env=None, num_episodes=100):
+def evaluate(model, new_env=None, num_episodes=100, index=None):
     """
     Evaluate a RL agent
     :param model: (BaseRLModel object) the RL Agent
@@ -140,6 +140,7 @@ def evaluate(model, new_env=None, num_episodes=100):
             mean_prices = []
             current_energies = []
             all_earnings = [0]
+            current_times = []
 
         done = False
         obs = env.reset()
@@ -166,11 +167,16 @@ def evaluate(model, new_env=None, num_episodes=100):
                 current_prices.append(current_price)
                 mean_prices.append(mean_price)
                 current_energies.append(current_energy)
+                current_times.append(current_time)
 
         all_episode_rewards.append(sum(episode_rewards))
 
     fig, axs = plt.subplots(4, 1, sharex=True)
-    index = np.arange(0, len(current_energies))
+    if index is None:
+        index = np.arange(0, len(current_times))
+    else:
+        print(np.asarray(current_times))
+        index = index[np.asarray(current_times, dtype=int)]
     cum_rewards = np.cumsum(episode_rewards)
     bank_total = np.cumsum(all_earnings)
     axs[0].plot(index, cum_rewards, color="red", label="Cumalative rewards")
