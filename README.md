@@ -6,7 +6,7 @@ Our GitHub Repo for the [AIHack2022](https://2022.aihack.org) hackathon.
 
 ## Submission
 
-To see our final model and conclusions read `submission.ipynb`.
+To see our final model and conclusions read `submission.ipynb` or our `Hackathon22` presentation.
 
 ## Installation
 
