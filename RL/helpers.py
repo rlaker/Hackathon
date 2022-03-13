@@ -7,7 +7,7 @@ class energy_price_env(gym.Env):
     def __init__(
         self,
         price_array,
-        start_energy=1,
+        start_energy=0,
         start_time=0,
         max_time=7 * 24 * 2,
         window_size=1000,
@@ -47,9 +47,9 @@ class energy_price_env(gym.Env):
         if idx == 0:
             return self.price_array[idx]
         elif idx < self.window_size:
-            return np.mean(self.price_array[:idx])
+            return np.median(self.price_array[:idx])
         else:
-            return np.mean(self.price_array[idx - self.window_size : idx])
+            return np.median(self.price_array[idx - self.window_size : idx])
 
     def step(self, action):
         current_price, mean_price, current_energy, current_time = self.state
@@ -145,6 +145,7 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     for i in range(num_episodes):
 
         episode_rewards = []
+
         if i == 0:
             current_prices = []
             mean_prices = []
@@ -201,6 +202,14 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     axs[3].plot(index, current_energies[:-1], color="blue", label="Current energies")
 
     mean_episode_reward = np.mean(all_episode_rewards)
-    print("Mean reward:", mean_episode_reward, "Num episodes:", num_episodes)
+    std_episode_reward = np.std(all_episode_rewards)
+    print(
+        "Mean reward:",
+        mean_episode_reward,
+        "+/-",
+        std_episode_reward,
+        "\t Num episodes:",
+        num_episodes,
+    )
 
     return mean_episode_reward
