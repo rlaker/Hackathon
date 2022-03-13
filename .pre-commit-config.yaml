@@ -34,6 +34,7 @@ repos:
     -   id: check-merge-conflict
         exclude_types: ["jupyter"]
     -   id: check-added-large-files
+        args: [--maxkb, "2000"]
     -   id: mixed-line-ending
         exclude_types: ["jupyter"]
         args: [--fix=lf]
