@@ -24,7 +24,11 @@ python -m pip install <package>
 
 Test your install by running the ```test_installation.py``` script. I use pytest (installed in the environment) to run the tests. Either run `pytest` in the command line, or use the "Testing" extension of VSCode.
 
-## Pre-commit
+## Development
+
+Only do these steps when contributing to the repo.
+
+### Pre-commit
 
 To make our code cleaner and well formatted I have included some [pre-commits](https://pre-commit.com/). The configuration for this is stored in `.pre-commit-config.yaml`. To install the hooks run:
 ```bash
