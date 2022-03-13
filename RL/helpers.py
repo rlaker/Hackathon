@@ -74,7 +74,6 @@ class energy_price_env(gym.Env):
     def get_price(self, idx):
         return self.price_array[int(idx)]
 
-
     def get_expected_price(self, idx, window_size=2 * 24, mode="median"):
         return get_expected_price(
             self.price_array, idx, window_size=window_size, mode=mode
@@ -231,7 +230,7 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     axs[2].legend()
 
     axs[3].plot(index, current_energies[:-1], color="blue", label="Current energies")
-
+    fig.autofmt_xdate()
     mean_episode_reward = np.mean(all_episode_rewards)
     std_episode_reward = np.std(all_episode_rewards)
     print(
