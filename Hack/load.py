@@ -5,7 +5,10 @@ from pathlib import Path
 import pandas as pd
 import pytz
 
-DATA_DIR = Path("./Data")
+DATA_DIR = Path().resolve().parent / "Data"
+
+if not (DATA_DIR).exists():
+    DATA_DIR = DATA_DIR.parents[1] / "Data/"
 
 
 class loader(abc.ABC):
