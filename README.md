@@ -1,5 +1,11 @@
 # 🎉🎉🎉 Winners 🎉🎉🎉
 
+Authors:
+* G. Farrow
+* R. Laker
+* P. Moloney
+* T. Woolley
+
 ## AIHack 2022
 
 Our GitHub Repo for the [AIHack2022](https://2022.aihack.org) hackathon.
