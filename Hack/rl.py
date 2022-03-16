@@ -55,8 +55,6 @@ class energy_price_env(gym.Env):
         self.capacity = 1  # MWh
         self.efficiency = 0.85
 
-        self.rewards = np.array([0])
-
         self.state = np.array(
             [
                 self.get_price(self.time),
