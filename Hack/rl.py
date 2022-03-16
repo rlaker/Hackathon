@@ -55,6 +55,8 @@ class energy_price_env(gym.Env):
         self.capacity = 1  # MWh
         self.efficiency = 0.85
 
+        self.rewards = np.array([0])
+
         self.state = np.array(
             [
                 self.get_price(self.time),
@@ -108,7 +110,6 @@ class energy_price_env(gym.Env):
         new_energy = self.apply_action(mapped_action, current_energy)
 
         # want to save this to punish even if battery is empty/full
-        energy_after_action = new_energy
 
         # make sure energy cannot be greater than capacity
         new_energy = max(0, new_energy)
@@ -120,24 +121,37 @@ class energy_price_env(gym.Env):
         revenue = -delta_energy * current_price
         self.earnings += revenue
 
+        expected_profit = -delta_energy * mean_price
+
+        opportunity_cost = revenue - expected_profit
+
         # if delta_energy == 0 then we tried to sell with no charge
         # or buy with a full charge
         # We still want to give a reward
 
         # this does not trigger properly
         # ! finish tomorrow
-        if delta_energy < 0.01 and abs(mapped_action) > 0.5:
-            # now we want to punish the opposite to normal
-            # because we are missing an opportunity
-            print("doing my expection")
-            delta_energy = -abs(energy_after_action - current_energy)
+        # print("Before", delta_energy)
+        # if abs(delta_energy) < 0.01 and abs(mapped_action) > 0.5:
+        #     # what was the opportunity cost last time?
+        #     # print("triggered")
+        #     previous_opp_cost = self.rewards[-1]
 
-        expected_profit = -delta_energy * mean_price
-
-        opportunity_cost = revenue - expected_profit
+        #     missed_delta_energy = energy_after_action - current_energy
+        #     missed_revenue = -missed_delta_energy * current_price
+        #     missed_expected_profit = -missed_delta_energy * mean_price
+        #     missed_opp_cost = missed_revenue - missed_expected_profit
+        #     # print("After", missed_delta_energy)
+        #     # it is not the fact that I could make money here, it is the fact I could make more!
+        #     # so I need to previous reward
+        #     # print(previous_opp_cost, missed_opp_cost)
+        #     if abs(missed_opp_cost) > abs(previous_opp_cost):
+        #         # punish it for missing this better opportunity
+        #         opportunity_cost = -missed_opp_cost
 
         reward = opportunity_cost  # profit * multiplier * price_diff_from_expected
 
+        np.append(self.rewards, reward)
         # print("Delta energy: ", delta_energy)
         # print("Price diff from expected: ", price_diff_from_expected)
         # print("Revenue: ", revenue)
