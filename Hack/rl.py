@@ -17,15 +17,37 @@ def get_mode(arr, bin_number=10):
         return np.nan
 
 
-def get_expected_price(price_array, idx, window_size=2 * 24, mode="mode"):
+def get_expected_price(price_array, idx, window_size=2 * 24, mode="median"):
+    """Gets the expected price using the history of prices.
+
+    Currently this is a rolling window, with some kind of averaging.
+
+    In the future we want to implement a forecasting model instead.
+
+    Parameters
+    ----------
+    price_array : array
+        All the prices in the environment
+    idx : int
+        Current idx of the environment (time)
+    window_size : int, optional
+        size of the rolling window, by default 2*24
+    mode : str, optional
+        type of averaging to use, by default "median"
+
+    Returns
+    -------
+    float
+        Expected price at this time index
+    """
     idx = int(idx)
 
     if idx == 0:
         arr = price_array[idx]
     elif idx < window_size:
-        arr = price_array[:idx]
+        arr = price_array[: idx + 1]
     else:
-        arr = price_array[idx - window_size : idx]
+        arr = price_array[idx - window_size : idx + 1]
 
     if mode == "mean":
         return np.mean(arr)
@@ -60,6 +82,7 @@ class energy_price_env(gym.Env):
                 self.get_price(self.time),
                 self.get_expected_price(self.time),
                 start_energy,
+                self.time,
             ]
         )
 
@@ -74,7 +97,7 @@ class energy_price_env(gym.Env):
             self.price_array, idx, window_size=window_size, mode=mode
         )
 
-    def apply_action(self, mapped_action, current_energy):
+    def apply_action(self, human_action, current_energy):
         """Applies the mapped action.
 
         -1 for sell
@@ -83,20 +106,20 @@ class energy_price_env(gym.Env):
 
         Parameters
         ----------
-        mapped_action : int
+        human_action : int
             Action to applly, has to be the mapped action
         current_energy : float
             Current energy in the battery
 
         """
-        if mapped_action == -1:
+        if human_action == -1:
             # discharge === selling for 30 mins (0.5 hours)
             new_energy = current_energy - (self.power * 0.5)
 
-        elif mapped_action == 0:
+        elif human_action == 0:
             # hold === do nothing
             new_energy = current_energy
-        elif mapped_action == 1:
+        elif human_action == 1:
             # charge === buy energy for 30 mins (0.5 hours)
             new_energy = current_energy + (self.power * 0.5 * self.efficiency)
 
@@ -115,8 +138,8 @@ class energy_price_env(gym.Env):
 
     def step(self, action):
         current_price, expected_price, current_energy, current_time = self.state
-        mapped_action = env2human(action)
-        new_energy = self.apply_action(mapped_action, current_energy)
+        human_action = env2human(action)
+        new_energy = self.apply_action(human_action, current_energy)
 
         # want to save this to punish even if battery is empty/full
 
@@ -164,11 +187,48 @@ class energy_price_env(gym.Env):
         return self.state
 
 
-def humans2env(action):
+def human2env(action):
+    """Needs because Gym env would only work with 0,1,2 as states
+    but this is confusing as a human.
+
+    We have:
+    -1 == sell == 0 in env
+    0 == hold == 1 in env
+    1 == buy == 2 in env
+
+    Parameters
+    ----------
+    action : int
+        Human readable action
+
+    Returns
+    -------
+    int
+        Action that the environment accepts
+    """
     return int(action + 1)
 
 
 def env2human(action):
+    """Needs because Gym env would only work with 0,1,2 as states
+    but this is confusing as a human.
+
+    We have:
+    -1 == sell == 0 in env
+    0 == hold == 1 in env
+    1 == buy == 2 in env
+
+    Parameters
+    ----------
+    int
+        Action that the environment accepts
+
+    Returns
+    -------
+    action : int
+        Human readable action
+
+    """
     return int(action - 1)
 
 
