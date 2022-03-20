@@ -244,3 +244,20 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     )
 
     return mean_episode_reward
+
+
+def quick_eval(model):
+    """
+    Evaluation func for the multiprocessing that we have designed to be as quick as possible!
+    """
+    print("called")
+    env = model.get_env()
+    env.reset()
+    done = False
+    episode_rewards = []
+    obs = env.reset()
+    while not done:
+        action, _states = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+        episode_rewards.append(reward)
+    return sum(episode_rewards)
