@@ -1,17 +1,33 @@
 import sys
-
 sys.path.append("../")
 import multiprocessing as mp
 import time as time
-
 import numpy as np
 from stable_baselines3 import PPO
 from stable_baselines3.ppo.policies import MlpPolicy
-
 from Hack import load, rl
+import gym
 
+def quick_eval(idx, model):
+    """
+    Evaluation func for the multiprocessing that we have designed to be as quick as possible!
+    """
+    print("called")
+    env = model.get_env()
+    env.reset()
+    done = False
+    episode_rewards = []
+    obs = env.reset()
+    while not done:
+        action, _states = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+        episode_rewards.append(reward)
+    return sum(episode_rewards)
 
-def objective(idx):
+def add_two(idx, a, b):
+    return (a+b)
+
+def objective():
     """
     Function to take in hyperparameters, train a reinforcement model, and output the "profit" of the model as a metric
     """
@@ -26,17 +42,17 @@ def objective(idx):
     env = rl.energy_price_env(obs_price_array, window_size=24 * 2, power=power)
     model = PPO(MlpPolicy, env, verbose=0)
 
-    # this part is the slow part that we want to split across processors:
+    starmap_obj2 = [(i, model) for i in range(10)]
 
-    mean_reward_eval = rl.quick_eval(model)
-    return mean_reward_eval
+    starmap_obj = [(0, i, j) for i, j  in list(zip(range(10), range(10)))]
+    # # this part is the slow part that we want to split across processors:
+    with mp.Pool(2) as p:
+        val_list = p.starmap(add_two, starmap_obj)
 
+    # mean_reward_eval = np.mean(np.array(val_list))
+    # return mean_reward_eval
+    return sum(val_list), starmap_obj2
 
-if __name__ == "__main__":
-    time_start = time.time()
-    with mp.Pool(5) as p:
-        val_list = p.map(objective, range(10))
-    print("mean = ", np.mean(np.array(val_list)))
-    time_stop = time.time()
-    print("time = ", time_stop - time_start)
-    print("val_list = ", val_list)
+if __name__=="__main__":
+    a = objective()
+    print(a)
