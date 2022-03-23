@@ -41,9 +41,8 @@ class energy_price_env(gym.Env):
         self.action_space = gym.spaces.Discrete(3)
         # current_price, mean_price, current_energy, time
         self.observation_space = gym.spaces.Box(
-            low=np.array([-np.inf, -np.inf, 0, 0]),
-            high=np.array([np.inf, np.inf, 1, np.inf]),
-            dtype=np.float32,
+            low=np.array([-np.inf, -np.inf, 0, 0], dtype=np.float32),
+            high=np.array([np.inf, np.inf, 1, np.inf], dtype=np.float32),
         )
         # our state is the charge
         self.start_energy = start_energy
