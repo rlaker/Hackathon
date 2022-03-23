@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append("../")
 import multiprocessing as mp
 import time as time
@@ -7,6 +8,7 @@ from stable_baselines3 import PPO
 from stable_baselines3.ppo.policies import MlpPolicy
 from Hack import load, rl
 import gym
+
 
 def quick_eval(idx, model):
     """
@@ -24,8 +26,10 @@ def quick_eval(idx, model):
         episode_rewards.append(reward)
     return sum(episode_rewards)
 
+
 def add_two(idx, a, b):
-    return (a+b)
+    return a + b
+
 
 def objective():
     """
@@ -44,7 +48,7 @@ def objective():
 
     starmap_obj2 = [(i, model) for i in range(10)]
 
-    starmap_obj = [(0, i, j) for i, j  in list(zip(range(10), range(10)))]
+    starmap_obj = [(0, i, j) for i, j in list(zip(range(10), range(10)))]
     # # this part is the slow part that we want to split across processors:
     with mp.Pool(2) as p:
         val_list = p.starmap(add_two, starmap_obj)
@@ -53,6 +57,7 @@ def objective():
     # return mean_reward_eval
     return sum(val_list), starmap_obj2
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     a = objective()
     print(a)
