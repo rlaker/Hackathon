@@ -41,8 +41,8 @@ class energy_price_env(gym.Env):
         self.action_space = gym.spaces.Discrete(3)
         # current_price, mean_price, current_energy, time
         self.observation_space = gym.spaces.Box(
-            low=np.float32(np.array([-np.inf, -np.inf, 0, 0])),
-            high=np.float32(np.array([np.inf, np.inf, 1, np.inf]))
+            low=np.array([-np.inf, -np.inf, 0, 0], dtype=np.float32),
+            high=np.array([np.inf, np.inf, 1, np.inf], dtype=np.float32),
         )
         # our state is the charge
         self.start_energy = start_energy
@@ -245,18 +245,17 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     return mean_episode_reward
 
 
-# def quick_eval(idx, model):
-#     """
-#     Evaluation func for the multiprocessing that we have designed to be as quick as possible!
-#     """
-#     print("called")
-#     env = model.get_env()
-#     env.reset()
-#     done = False
-#     episode_rewards = []
-#     obs = env.reset()
-#     while not done:
-#         action, _states = model.predict(obs)
-#         obs, reward, done, info = env.step(action)
-#         episode_rewards.append(reward)
-#     return sum(episode_rewards)
+def quick_eval(idx, model):
+    """
+    Evaluation func for the multiprocessing that we have designed to be as quick as possible!
+    """
+    env = model.get_env()
+    env.reset()
+    done = False
+    episode_rewards = []
+    obs = env.reset()
+    while not done:
+        action, _states = model.predict(obs)
+        obs, reward, done, info = env.step(action)
+        episode_rewards.append(reward)
+    return sum(episode_rewards)
