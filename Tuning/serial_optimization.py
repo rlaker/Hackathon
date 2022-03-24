@@ -1,15 +1,14 @@
 import sys
 
 sys.path.append("../")
-import numpy as np
-from stable_baselines3 import PPO
-from stable_baselines3.ppo.policies import MlpPolicy
 
-from Hack import load, rl
+import time as time  # noqa: E402
 
-"""
-This script is what we want to somehow parallelise for tuning
-"""
+import numpy as np  # noqa: E402
+from stable_baselines3 import PPO  # noqa: E402
+from stable_baselines3.ppo.policies import MlpPolicy  # noqa: E402
+
+from Hack import load, rl  # noqa: E402
 
 
 def objective(num_episodes=100):
@@ -26,6 +25,7 @@ def objective(num_episodes=100):
     power = 0.5
     env = rl.energy_price_env(obs_price_array, window_size=24 * 2, power=power)
     model = PPO(MlpPolicy, env, verbose=0)
+    model.learn(100)
     val_list = []
 
     for i in range(num_episodes):
@@ -36,5 +36,8 @@ def objective(num_episodes=100):
 
 
 if __name__ == "__main__":
-    a = objective()
+    time_start = time.time()
+    a = objective(num_episodes=150)
+    time_stop = time.time()
     print(a)
+    print("time = ", time_stop - time_start)
