@@ -40,7 +40,7 @@ If you need to install a new package, try using conda first. Then use pip, but r
 python -m pip install <package>
 ```
 
-Test your install by running the ```test_installation.py``` script (just checks sklearn as an example module). I use pytest (installed in the environment) to run the tests. Either run `pytest` in the command line, or use the "Testing" extension of VSCode.
+I use pytest (installed in the environment) to run the tests. Either run `pytest` in the command line, or use the "Testing" extension of VSCode.
 
 ## Development
 
