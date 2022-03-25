@@ -30,7 +30,7 @@ def evaluate_model(iter_obj):
         idx = obj[0]
         model = obj[1]
         val = rl.quick_eval(idx, model)
-        val_list.append(val)
+        total_val += val
     return sum(val_list)
 
 
