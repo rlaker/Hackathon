@@ -2,13 +2,13 @@ import sys
 
 sys.path.append("../")
 
-import time as time  # noqa: E402
+import time as time
 
-import numpy as np  # noqa: E402
-from stable_baselines3 import PPO  # noqa: E402
-from stable_baselines3.ppo.policies import MlpPolicy  # noqa: E402
+import numpy as np
+from stable_baselines3 import PPO
+from stable_baselines3.ppo.policies import MlpPolicy
 
-from Hack import load, rl  # noqa: E402
+from Hack import load, rl
 
 
 def objective(num_episodes=100):

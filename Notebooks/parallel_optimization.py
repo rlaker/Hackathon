@@ -2,22 +2,22 @@ import sys
 
 sys.path.append("../")
 
-import optuna  # noqa: E402
-from pathos.multiprocessing import ProcessingPool  # noqa: E402
-from stable_baselines3 import PPO  # noqa: E402
-from stable_baselines3.ppo.policies import MlpPolicy  # noqa: E402
+import optuna
+from pathos.multiprocessing import ProcessingPool
+from stable_baselines3 import PPO
+from stable_baselines3.ppo.policies import MlpPolicy
 
-from Hack import load, rl  # noqa: E402
+from Hack import load, rl
 
 
-def create_train_model(price_array, learning_rate):
+def create_train_model(price_array, learning_rate, power=0.5, window_size=2 * 24):
     """
     Creates and trains the deep learning model
     """
     start_idx = 0
     end_idx = 4 * 2 * 24 * 7  # start_of_2020 # 2019->2020 # 2*24*7
     obs_price_array = price_array[start_idx:end_idx]
-    env = rl.energy_price_env(obs_price_array, window_size=24 * 2, power=power)
+    env = rl.energy_price_env(obs_price_array, window_size=window_size, power=power)
     model = PPO(MlpPolicy, env, verbose=0, learning_rate=learning_rate)
     model.learn(100)
     return model
