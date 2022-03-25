@@ -17,15 +17,37 @@ def get_mode(arr, bin_number=10):
         return np.nan
 
 
-def get_expected_price(price_array, idx, window_size=2 * 24, mode="mode"):
+def get_expected_price(price_array, idx, window_size=2 * 24, mode="median"):
+    """Gets the expected price using the history of prices.
+
+    Currently this is a rolling window, with some kind of averaging.
+
+    In the future we want to implement a forecasting model instead.
+
+    Parameters
+    ----------
+    price_array : array
+        All the prices in the environment
+    idx : int
+        Current idx of the environment (time)
+    window_size : int, optional
+        size of the rolling window, by default 2*24
+    mode : str, optional
+        type of averaging to use, by default "median"
+
+    Returns
+    -------
+    float
+        Expected price at this time index
+    """
     idx = int(idx)
 
     if idx == 0:
         arr = price_array[idx]
     elif idx < window_size:
-        arr = price_array[:idx]
+        arr = price_array[: idx + 1]
     else:
-        arr = price_array[idx - window_size : idx]
+        arr = price_array[idx - window_size : idx + 1]
 
     if mode == "mean":
         return np.mean(arr)
@@ -59,6 +81,7 @@ class energy_price_env(gym.Env):
                 self.get_price(self.time),
                 self.get_expected_price(self.time),
                 start_energy,
+                self.time,
             ]
         )
 
@@ -73,19 +96,51 @@ class energy_price_env(gym.Env):
             self.price_array, idx, window_size=window_size, mode=mode
         )
 
-    def step(self, action):
-        current_price, mean_price, current_energy, current_time = self.state
-        mapped_action = env2human(action)
-        if mapped_action == -1:
-            # discharge === selling for 30 mins
+    def apply_action(self, human_action, current_energy):
+        """Applies the mapped action.
+
+        -1 for sell
+        0 for hold
+        1 for buy
+
+        Parameters
+        ----------
+        human_action : int
+            Action to applly, has to be the mapped action
+        current_energy : float
+            Current energy in the battery
+
+        """
+        if human_action == -1:
+            # discharge === selling for 30 mins (0.5 hours)
             new_energy = current_energy - (self.power * 0.5)
 
-        elif mapped_action == 0:
+        elif human_action == 0:
             # hold === do nothing
             new_energy = current_energy
-        elif mapped_action == 1:
-            # charge === buy energy for 30 mins
+        elif human_action == 1:
+            # charge === buy energy for 30 mins (0.5 hours)
             new_energy = current_energy + (self.power * 0.5 * self.efficiency)
+
+        return new_energy
+
+    def get_reward(self, delta_energy, current_price, expected_price):
+        revenue = -delta_energy * current_price
+        # log this so we can plot vs time later
+        self.earnings += revenue
+
+        expected_profit = -delta_energy * expected_price
+
+        opportunity_cost = revenue - expected_profit
+        reward = opportunity_cost
+        return reward
+
+    def step(self, action):
+        current_price, expected_price, current_energy, current_time = self.state
+        human_action = env2human(action)
+        new_energy = self.apply_action(human_action, current_energy)
+
+        # want to save this to punish even if battery is empty/full
 
         # make sure energy cannot be greater than capacity
         new_energy = max(0, new_energy)
@@ -93,19 +148,7 @@ class energy_price_env(gym.Env):
         # now work out the delta energy
         delta_energy = new_energy - current_energy
 
-        revenue = -delta_energy * current_price
-        self.earnings += revenue
-        expected_profit = -delta_energy * mean_price
-
-        opportunity_cost = revenue - expected_profit
-
-        reward = opportunity_cost  # profit * multiplier * price_diff_from_expected
-
-        # print("Delta energy: ", delta_energy)
-        # print("Price diff from expected: ", price_diff_from_expected)
-        # print("Revenue: ", revenue)
-        # print("Expected Profit: ", expected_profit)
-        # print("Reward ", reward)
+        reward = self.get_reward(delta_energy, current_price, expected_price)
 
         # increase the time
         current_time += 1
@@ -143,11 +186,48 @@ class energy_price_env(gym.Env):
         return self.state
 
 
-def humans2env(action):
+def human2env(action):
+    """Needs because Gym env would only work with 0,1,2 as states
+    but this is confusing as a human.
+
+    We have:
+    -1 == sell == 0 in env
+    0 == hold == 1 in env
+    1 == buy == 2 in env
+
+    Parameters
+    ----------
+    action : int
+        Human readable action
+
+    Returns
+    -------
+    int
+        Action that the environment accepts
+    """
     return int(action + 1)
 
 
 def env2human(action):
+    """Needs because Gym env would only work with 0,1,2 as states
+    but this is confusing as a human.
+
+    We have:
+    -1 == sell == 0 in env
+    0 == hold == 1 in env
+    1 == buy == 2 in env
+
+    Parameters
+    ----------
+    int
+        Action that the environment accepts
+
+    Returns
+    -------
+    action : int
+        Human readable action
+
+    """
     return int(action - 1)
 
 
@@ -176,12 +256,14 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
             current_energies = []
             all_earnings = [0]
             current_times = []
+            actions = []
 
         done = False
         obs = env.reset()
         while not done:
             # _states are only useful when using LSTM policies
             action, _states = model.predict(obs)
+
             # here, action, rewards and dones are arrays
             # because we are using vectorized env
             obs, reward, done, info = env.step(action)
@@ -203,10 +285,11 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
                 mean_prices.append(mean_price)
                 current_energies.append(current_energy)
                 current_times.append(current_time)
+                actions.append(env2human(action))
 
         all_episode_rewards.append(sum(episode_rewards))
 
-    fig, axs = plt.subplots(4, 1, sharex=True, figsize=(20, 15))
+    fig, axs = plt.subplots(5, 1, sharex=True, figsize=(20, 15))
     if index is None:
         index = np.arange(0, len(current_times))[:-1]
     else:
@@ -224,6 +307,7 @@ def evaluate(model, new_env=None, num_episodes=100, index=None):
     # axs[2].legend()
 
     axs[3].plot(index, current_energies[:-1], color="blue", label="Current energies")
+    axs[4].plot(index, actions[:-1], color="blue", label="Actions")
     fig.autofmt_xdate()
     mean_episode_reward = np.mean(all_episode_rewards)
     std_episode_reward = np.std(all_episode_rewards)

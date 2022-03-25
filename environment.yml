@@ -30,3 +30,5 @@ dependencies:
     - stable_baselines3
     - optuna
     - pathos
+    - pybats
+
