@@ -17,7 +17,6 @@ def create_train_model(price_array, learning_rate):
     start_idx = 0
     end_idx = 4 * 2 * 24 * 7  # start_of_2020 # 2019->2020 # 2*24*7
     obs_price_array = price_array[start_idx:end_idx]
-    power = 0.5
     env = rl.energy_price_env(obs_price_array, window_size=24 * 2, power=power)
     model = PPO(MlpPolicy, env, verbose=0, learning_rate=learning_rate)
     model.learn(100)
