@@ -31,7 +31,7 @@ def evaluate_model(iter_obj):
         model = obj[1]
         val = rl.quick_eval(idx, model)
         total_val += val
-    return sum(val_list)
+    return total_val
 
 
 def objective(trial):
