@@ -258,4 +258,4 @@ def quick_eval(idx, model):
         action, _states = model.predict(obs)
         obs, reward, done, info = env.step(action)
         total_reward += reward
-    return sum(episode_rewards)
+    return total_reward
