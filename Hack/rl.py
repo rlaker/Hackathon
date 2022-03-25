@@ -252,7 +252,7 @@ def quick_eval(idx, model):
     env = model.get_env()
     env.reset()
     done = False
-    episode_rewards = []
+    total_reward = 0
     obs = env.reset()
     while not done:
         action, _states = model.predict(obs)
