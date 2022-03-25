@@ -257,5 +257,5 @@ def quick_eval(idx, model):
     while not done:
         action, _states = model.predict(obs)
         obs, reward, done, info = env.step(action)
-        episode_rewards.append(reward)
+        total_reward += reward
     return sum(episode_rewards)
