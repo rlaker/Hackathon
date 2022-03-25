@@ -28,4 +28,6 @@ dependencies:
   - pip
   - pip:
     - stable_baselines3
+    - optuna
+    - pathos
     - pybats
