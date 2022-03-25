@@ -25,7 +25,7 @@ def create_train_model(price_array, learning_rate):
 
 
 def evaluate_model(iter_obj):
-    val_list = []
+    total_val = 0
     for obj in iter_obj:
         idx = obj[0]
         model = obj[1]
