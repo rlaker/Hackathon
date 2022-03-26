@@ -58,14 +58,25 @@ def get_expected_price(price_array, idx, window_size=2 * 24, mode="median"):
 
 
 class energy_price_env(gym.Env):
-    def __init__(self, obs_price_array, start_energy=1, window_size=1000, power=1):
+    def __init__(self, obs_price_array, start_energy=1, window_size=1000, power=1, forecast_price_array=None, forecast_error=None):
         self.price_array = obs_price_array
         self.action_space = gym.spaces.Discrete(3)
-        # current_price, mean_price, current_energy, time
+        
+        if(forecast_price_array is None):
+            self.l_forecast=False
+            self.forecast_price_array = np.zeros(np.size(obs_price_array))
+            self.forecast_error = np.zeros(np.size(obs_price_array))
+        else:
+            self.l_forecast=True
+            self.forecast_price_array = forecast_price_array
+            self.forecast_error = forecast_error
+        
+        # current_price, mean_price, current_energy, time, forecasted_price
         self.observation_space = gym.spaces.Box(
-            low=np.array([-np.inf, -np.inf, 0, 0], dtype=np.float32),
-            high=np.array([np.inf, np.inf, 1, np.inf], dtype=np.float32),
+            low=np.array([-np.inf, -np.inf, 0, 0, -np.inf, 0], dtype=np.float32),
+            high=np.array([np.inf, np.inf, 1, np.inf, np.inf, np.inf], dtype=np.float32),
         )
+
         # our state is the charge
         self.start_energy = start_energy
         self.window_size = window_size
@@ -82,6 +93,8 @@ class energy_price_env(gym.Env):
                 self.get_expected_price(self.time),
                 start_energy,
                 self.time,
+                self.get_forecast(self.time),
+                self.get_forecast_error(self.time)
             ]
         )
 
@@ -90,6 +103,18 @@ class energy_price_env(gym.Env):
 
     def get_price(self, idx):
         return self.price_array[int(idx)]
+
+    def get_forecast(self, idx):
+        if(self.l_forecast):
+            return self.forecast_price_array[int(idx)]
+        else:
+            return 0.
+
+    def get_forecast_error(self, idx):
+        if(self.l_forecast):
+            return self.forecast_error[int(idx)]
+        else:
+            return 0.
 
     def get_expected_price(self, idx, window_size=2 * 24, mode="median"):
         return get_expected_price(
@@ -124,23 +149,24 @@ class energy_price_env(gym.Env):
 
         return new_energy
 
-    def get_reward(self, delta_energy, current_price, expected_price):
+    def get_reward(self, delta_energy, current_price, expected_price, forecast_price=None, forecast_error=None):
         revenue = -delta_energy * current_price
         # log this so we can plot vs time later
         self.earnings += revenue
+        expected_profit = -delta_energy * expected_price # Reward/ punsh for selling when price is high/ low
 
-        expected_profit = -delta_energy * expected_price
+        if(self.l_forecast):
+            if(abs(forecast_price/forecast_error)>2): # If we can trust the result sufficiently, i.e. the error is low...
+                expected_profit += -delta_energy * (expected_price - forecast_price) # Punish if selling when price is predicted to increase soon
 
         opportunity_cost = revenue - expected_profit
         reward = opportunity_cost
         return reward
 
     def step(self, action):
-        current_price, expected_price, current_energy, current_time = self.state
+        current_price, expected_price, current_energy, current_time, current_fore_pr, current_fore_er = self.state
         human_action = env2human(action)
         new_energy = self.apply_action(human_action, current_energy)
-
-        # want to save this to punish even if battery is empty/full
 
         # make sure energy cannot be greater than capacity
         new_energy = max(0, new_energy)
@@ -148,7 +174,7 @@ class energy_price_env(gym.Env):
         # now work out the delta energy
         delta_energy = new_energy - current_energy
 
-        reward = self.get_reward(delta_energy, current_price, expected_price)
+        reward = self.get_reward(delta_energy, current_price, expected_price, forecast_price=current_fore_pr, forecast_error=current_fore_er)
 
         # increase the time
         current_time += 1
@@ -158,6 +184,8 @@ class energy_price_env(gym.Env):
             self.get_expected_price(current_time),
             new_energy,
             current_time,
+            self.get_forecast(current_time),
+            self.get_forecast_error(current_time)
         )
 
         info = {}
@@ -179,6 +207,8 @@ class energy_price_env(gym.Env):
                 self.get_expected_price(self.time),
                 self.start_energy,
                 self.time,
+                self.get_forecast(self.time),
+                self.get_forecast_error(self.time)
             ]
         )
         # ! this puts us at the start of the week, we could make this random?
