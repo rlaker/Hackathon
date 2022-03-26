@@ -166,7 +166,7 @@ def evaluate(epex_data, horizon=6, forecast_start_index=0, forecast_end_index=-1
 
     mod, samples = analysis(
         prices,
-        family="poisson",
+        family="normal",
         dates=datetimes,
         forecast_start=forecast_start_date,  # First time step to forecast on
         forecast_end=forecast_end_date,  # Final time step to forecast on
